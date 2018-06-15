@@ -369,6 +369,20 @@ class RasaNLU(object):
             logger.exception(e)
             return simplejson.dumps({"error": "{}".format(e)})
 
+    @app.route("/language", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
+    @requires_auth
+    @check_cors
+    @inlineCallbacks
+    def language(self, request):
+        if request.method.decode('utf-8', 'strict') == 'GET':
+            pass
+        if request.method.decode('utf-8', 'strict') == 'POST':
+            pass
+        if request.method.decode('utf-8', 'strict') == 'DELETE':
+            pass
+
+
+
 
 if __name__ == '__main__':
     # Running as standalone python application
