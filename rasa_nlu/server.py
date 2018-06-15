@@ -374,19 +374,18 @@ class RasaNLU(object):
     @check_cors
     @inlineCallbacks
     def language(self, request):
+        gen = yield 'pass'
         if request.method.decode('utf-8', 'strict') == 'GET':
-            pass
+            returnValue(gen)
         if request.method.decode('utf-8', 'strict') == 'POST':
-            pass
+            returnValue(gen)
         if request.method.decode('utf-8', 'strict') == 'DELETE':
-            pass
-
-
+            returnValue(gen)
 
 
 if __name__ == '__main__':
     # Running as standalone python application
-    cmdline_args = create_argument_parser().parse_args()
+    cmdline_args = create_argument_parser().parse_args(['--path', '/Users/coryhurst/Documents/Git_Stuff/Samtecspg2/local-storage'])
 
     utils.configure_colored_logging(cmdline_args.loglevel)
     pre_load = cmdline_args.pre_load
