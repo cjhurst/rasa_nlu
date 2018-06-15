@@ -374,12 +374,29 @@ class RasaNLU(object):
     @check_cors
     @inlineCallbacks
     def language(self, request):
+        import spacy.cli as spacy
+
         gen = yield 'pass'
         if request.method.decode('utf-8', 'strict') == 'GET':
+            spacy.info("cmd??")
+
             returnValue(gen)
+
         if request.method.decode('utf-8', 'strict') == 'POST':
+
+            try:
+                spacy.download( "cmd??" , "de", direct=False)
+                request.setResponseCode(200)
+            except:
+                request.setResponseCode(500)
             returnValue(gen)
         if request.method.decode('utf-8', 'strict') == 'DELETE':
+
+            try:
+                spacy.download( "cmd??" , "de", direct=False)
+                request.setResponseCode(200)
+            except:
+                request.setResponseCode(500)
             returnValue(gen)
 
 
