@@ -377,11 +377,18 @@ class RasaNLU(object):
 
         import spacy.cli as spacy
 
-        gen = yield 'pass'
-        if request.method.decode('utf-8', 'strict') == 'GET':
-            info = yield simplejson.dumps(spacy.info(silent=True), indent=4)
+        success = yield 'success'
 
-            returnValue(info)
+        if request.method.decode('utf-8', 'strict') == 'GET':
+            try:
+                info = yield simplejson.dumps(spacy.info(silent=True), indent=4)
+                request.setResponseCode(200)
+                returnValue(info)
+
+            except Exception as e:
+                request.setResponseCode(500)
+                logger.exception(e)
+                return simplejson.dumps({"error": "{}".format(e)})
 
         if request.method.decode('utf-8', 'strict') == 'POST':
 
@@ -389,17 +396,24 @@ class RasaNLU(object):
                 spacy.download("en", direct=False)
                 request.setResponseCode(200)
             except Exception as e:
+                request.setResponseCode(500)
                 logger.exception(e)
                 return simplejson.dumps({"error": "{}".format(e)})
-            returnValue(gen)
+
+            returnValue(success)
+
         if request.method.decode('utf-8', 'strict') == 'DELETE':
 
             try:
-                spacy.download( "cmd??" , "de", direct=False)
+                spacy.download("de", direct=False)
                 request.setResponseCode(200)
-            except:
+
+            except Exception as e:
                 request.setResponseCode(500)
-            returnValue(gen)
+                logger.exception(e)
+                return simplejson.dumps({"error": "{}".format(e)})
+
+            returnValue(success)
 
 
 if __name__ == '__main__':
