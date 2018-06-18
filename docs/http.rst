@@ -173,6 +173,50 @@ also returns a list of available projects the server can use to fulfill ``/parse
       }
     }
 
+``GET /languages``
+^^^^^^^^^^^^^^^
+
+This will return a list of installed spaCy models along with metadata
+
+.. code-block:: bash
+
+    $ curl localhost:5000/languages | python -mjson.tool
+    {
+        "de": {
+            "lang": "de",
+            "pipeline": [
+                "tagger",
+                "parser",
+                "ner"
+            ],
+            "name": "core_news_sm",
+            "license": "CC BY-SA 3.0",
+            "author": "Explosion AI",
+            ...
+      }
+
+``POST /languages``
+^^^^^^^^^^^^^^^
+
+This will download the specified spaCy model if available.
+
+.. code-block:: bash
+
+    $ curl localhost:5000/languages -d '{"link": "en", "model": "en_core_web_sm-2.0.0"}'
+
+    Check available models
+
+``DELETE /languages``
+^^^^^^^^^^^^^^^
+
+This will uninstall an installed spaCy model
+
+.. code-block:: bash
+
+    $ curl -DELETE localhost:5000/languages -d 'en_core_web_sm-2.0.0'
+
+    Check available models
+
 ``GET /version``
 ^^^^^^^^^^^^^^^^
 

@@ -392,7 +392,7 @@ class RasaNLU(object):
                 else:
                     data = {}
                     for x in spacy.info(silent=True)["Models"].split(','):
-                        data[x.strip()]=spacy.info(x.strip(), silent=True)
+                        data[x.strip()] = spacy.info(x.strip(), silent=True)
 
                     info = yield simplejson.dumps(data, indent=4)
                     request.setResponseCode(200)
@@ -411,9 +411,9 @@ class RasaNLU(object):
 
                 direct = params.get('direct')
 
-                #The spacy download runs in a sunprocess and can have unhandled errors.
-                #Ideally, we would be able to alter that funciton in the same way that the info funciton was altered
-                #to be able to propagate errors information upward that. Currently it is lost to
+                # The spaCy download runs in a subprocess and can have unhandled errors.
+                # Ideally, we would be able to alter that function in the same way that the info funciton was altered
+                # to be able to propagate errors information upward that. Currently it is lost to
                 # STDOUT of a subprocess.
 
                 if direct == 'True':
@@ -428,13 +428,16 @@ class RasaNLU(object):
                 logger.exception(e)
                 returnValue((yield simplejson.dumps({"error": "{}".format(e)})))
 
-            #We dont get the output of the spacy download.
-            #It also could have had an error on the subprocess
+            # We dont get the output of the spacy download.
+            # It also could have had an error on the subprocess
             returnValue((yield 'Check Available Models'))
 
         if request.method.decode('utf-8', 'strict') == 'DELETE':
 
-            import sys, subprocess, os
+            import sys
+            import subprocess
+            import os
+
             # for now you have to enter in the exact mane of the model
 
             try:
@@ -442,6 +445,8 @@ class RasaNLU(object):
                 model = params.get('model')
                 cmd = [sys.executable, '-m', 'pip', 'uninstall', '-y'] + [model]
                 result = subprocess.call(cmd, env=os.environ.copy())
+                if result != 0:
+                    raise Exception("Unsuccessful")
                 request.setResponseCode(200)
 
             except Exception as e:
@@ -449,12 +454,14 @@ class RasaNLU(object):
                 logger.exception(e)
                 return simplejson.dumps({"error": "{}".format(e)})
 
-            returnValue((yield result))
+            # We don't get the output of the spacy download.
+            # It also could have had an error on the subprocess
+            returnValue((yield 'Check available models'))
 
 
 if __name__ == '__main__':
     # Running as standalone python application
-    cmdline_args = create_argument_parser().parse_args(['--path', '/Users/coryhurst/Documents/Git_Stuff/Samtecspg2/local-storage'])
+    cmdline_args = create_argument_parser().parse_args()
 
     utils.configure_colored_logging(cmdline_args.loglevel)
     pre_load = cmdline_args.pre_load
