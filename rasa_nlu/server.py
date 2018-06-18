@@ -369,20 +369,34 @@ class RasaNLU(object):
             logger.exception(e)
             return simplejson.dumps({"error": "{}".format(e)})
 
-    @app.route("/language", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
+    @app.route("/languages", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
     @requires_auth
     @check_cors
     @inlineCallbacks
-    def language(self, request):
+    def languages(self, request):
 
         import spacy.cli as spacy
 
-        success = yield 'success'
+        request_content = request.content.read().decode('utf-8', 'strict')
+        params = {
+            key.decode('utf-8', 'strict'): value[0].decode('utf-8', 'strict')
+            for key, value in request.args.items()
+        }
 
         if request.method.decode('utf-8', 'strict') == 'GET':
+
             try:
-                info = yield simplejson.dumps(spacy.info(silent=True), indent=4)
-                request.setResponseCode(200)
+                model = params.get('model')
+                if model:
+                    info = yield simplejson.dumps(spacy.info(model, silent=True), indent=4)
+                else:
+                    data = {}
+                    for x in spacy.info(silent=True)["Models"].split(','):
+                        data[x.strip()]=spacy.info(x.strip(), silent=True)
+
+                    info = yield simplejson.dumps(data, indent=4)
+                    request.setResponseCode(200)
+
                 returnValue(info)
 
             except Exception as e:
@@ -393,19 +407,41 @@ class RasaNLU(object):
         if request.method.decode('utf-8', 'strict') == 'POST':
 
             try:
-                spacy.download("en", direct=False)
+                post_json = simplejson.loads(request_content)
+
+                direct = params.get('direct')
+
+                #The spacy download runs in a sunprocess and can have unhandled errors.
+                #Ideally, we would be able to alter that funciton in the same way that the info funciton was altered
+                #to be able to propagate errors information upward that. Currently it is lost to
+                # STDOUT of a subprocess.
+
+                if direct == 'True':
+                    spacy.download(post_json['model'], direct=True)
+                else:
+                    spacy.download(post_json['link'], direct=False)
+
                 request.setResponseCode(200)
+
             except Exception as e:
                 request.setResponseCode(500)
                 logger.exception(e)
-                return simplejson.dumps({"error": "{}".format(e)})
+                returnValue((yield simplejson.dumps({"error": "{}".format(e)})))
 
-            returnValue(success)
+            #We dont get the output of the spacy download.
+            #It also could have had an error on the subprocess
+            returnValue((yield 'Check Available Models'))
 
         if request.method.decode('utf-8', 'strict') == 'DELETE':
 
+            import sys, subprocess, os
+            # for now you have to enter in the exact mane of the model
+
             try:
-                spacy.download("de", direct=False)
+
+                model = params.get('model')
+                cmd = [sys.executable, '-m', 'pip', 'uninstall', '-y'] + [model]
+                result = subprocess.call(cmd, env=os.environ.copy())
                 request.setResponseCode(200)
 
             except Exception as e:
@@ -413,7 +449,7 @@ class RasaNLU(object):
                 logger.exception(e)
                 return simplejson.dumps({"error": "{}".format(e)})
 
-            returnValue(success)
+            returnValue((yield result))
 
 
 if __name__ == '__main__':
