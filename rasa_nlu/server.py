@@ -412,14 +412,19 @@ class RasaNLU(object):
                 direct = params.get('direct')
 
                 # The spaCy download runs in a subprocess and can have unhandled errors.
-                # Ideally, we would be able to alter that function in the same way that the info funciton was altered
+                # Ideally, we would be able to alter that function in the same way that the info function was altered
                 # to be able to propagate errors information upward that. Currently it is lost to
                 # STDOUT of a subprocess.
 
                 if direct == 'True':
-                    spacy.download(post_json['model'], direct=True)
+                    dl = spacy.download(post_json['model'], direct=True, silent = True)
+                    if dl.returncode !=0:
+                        raise Exception(dl.stderr.read())
+
                 else:
-                    spacy.download(post_json['link'], direct=False)
+                    dl = spacy.download(post_json['link'], direct=False, silent = True)
+                    if dl.returncode != 0:
+                        raise Exception(dl.stderr.read().decode('utf-8', 'strict'))
 
                 request.setResponseCode(200)
 
@@ -430,7 +435,7 @@ class RasaNLU(object):
 
             # We dont get the output of the spacy download.
             # It also could have had an error on the subprocess
-            returnValue((yield 'Check Available Models'))
+            returnValue((yield dl.stdout.read().decode('utf-8', 'strict')))
 
         if request.method.decode('utf-8', 'strict') == 'DELETE':
 
@@ -444,9 +449,11 @@ class RasaNLU(object):
 
                 model = params.get('model')
                 cmd = [sys.executable, '-m', 'pip', 'uninstall', '-y'] + [model]
-                result = subprocess.call(cmd, env=os.environ.copy())
+                result = subprocess.popen(cmd, env=os.environ.copy(), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                result.wait()
+
                 if result != 0:
-                    raise Exception("Unsuccessful")
+                    raise Exception(result.stderr.read().decode('utf-8', 'strict'))
                 request.setResponseCode(200)
 
             except Exception as e:
@@ -456,7 +463,7 @@ class RasaNLU(object):
 
             # We don't get the output of the spacy download.
             # It also could have had an error on the subprocess
-            returnValue((yield 'Check available models'))
+            returnValue((yield dl.stdout.read().decode('utf-8', 'strict')))
 
 
 if __name__ == '__main__':
